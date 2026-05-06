@@ -34,6 +34,9 @@ void parallelBubbleSort(int arr[], int n) {
 
 #pragma omp parallel for
         for (int j = start; j < n - 1; j += 2) {
+            if (j == start) {
+        cout << "Threads: " << omp_get_num_threads() << endl;
+    }
             if (arr[j] > arr[j + 1]) {
                 swap(arr[j], arr[j + 1]);
             }

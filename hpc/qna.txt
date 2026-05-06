@@ -1,0 +1,444 @@
+
+# 🔹 What is OpenMP?
+
+OpenMP is an API used for **parallel programming** in C/C++.
+
+It allows multiple threads (CPU cores) to work simultaneously.
+
+You enabled OpenMP using:
+
+```bash
+g++ -fopenmp bubble.cpp -o bubble
+```
+
+---
+
+# 🔹 Header Files
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <omp.h>
+using namespace std;
+```
+
+### Explanation
+
+| Header     | Purpose          |
+| ---------- | ---------------- |
+| `iostream` | Input and output |
+| `vector`   | Dynamic array    |
+| `omp.h`    | OpenMP functions |
+
+---
+
+# 🔹 Parallel Bubble Sort Function
+
+```cpp
+void parallel_bubble_sort(vector<int>& arr)
+```
+
+This function sorts the array using:
+
+## Odd-Even Transposition Sort
+
+This is a parallel version of bubble sort.
+
+Normal bubble sort cannot be fully parallelized because swaps depend on previous swaps.
+
+So we divide sorting into:
+
+* Even Phase
+* Odd Phase
+
+---
+
+# 🔹 Outer Loop
+
+```cpp
+for (int phase = 0; phase < n; phase++)
+```
+
+The algorithm runs `n` phases.
+
+Each phase performs comparisons in parallel.
+
+---
+
+# 🔹 Even Phase
+
+```cpp
+if (phase % 2 == 0)
+```
+
+In even phase:
+
+Compare:
+
+```text
+(0,1), (2,3), (4,5)
+```
+
+Code:
+
+```cpp
+#pragma omp parallel for
+for (int i = 0; i < n - 1; i += 2)
+```
+
+### Meaning
+
+`#pragma omp parallel for`
+
+→ OpenMP distributes loop iterations among multiple threads.
+
+Each thread handles different comparisons simultaneously.
+
+Example:
+
+| Thread | Comparison      |
+| ------ | --------------- |
+| T1     | arr[0] & arr[1] |
+| T2     | arr[2] & arr[3] |
+| T3     | arr[4] & arr[5] |
+
+---
+
+# 🔹 Swap Condition
+
+```cpp
+if (arr[i] > arr[i + 1]) {
+    swap(arr[i], arr[i + 1]);
+}
+```
+
+If left element is larger, swap them.
+
+---
+
+# 🔹 Odd Phase
+
+```cpp
+else
+```
+
+In odd phase:
+
+Compare:
+
+```text
+(1,2), (3,4), (5,6)
+```
+
+Code:
+
+```cpp
+#pragma omp parallel for
+for (int i = 1; i < n - 1; i += 2)
+```
+
+---
+
+# 🔹 Why Odd-Even Works
+
+Alternating even and odd comparisons gradually pushes larger elements toward the end.
+
+It behaves similarly to bubble sort but supports parallel execution safely.
+
+---
+
+# 🔹 Sequential Bubble Sort
+
+```cpp
+void sequential_bubble_sort(vector<int>& arr)
+```
+
+This is the normal bubble sort.
+
+---
+
+## Outer Loop
+
+```cpp
+for (int i = 0; i < n - 1; i++)
+```
+
+Controls number of passes.
+
+---
+
+## Inner Loop
+
+```cpp
+for (int j = 0; j < n - i - 1; j++)
+```
+
+Compares adjacent elements.
+
+---
+
+## Swap
+
+```cpp
+if (arr[j] > arr[j + 1]) {
+    swap(arr[j], arr[j + 1]);
+}
+```
+
+---
+
+# 🔹 Main Function
+
+---
+
+## Input Size
+
+```cpp
+int n;
+cout << "Enter number of elements: ";
+cin >> n;
+```
+
+User enters array size.
+
+---
+
+## Input Elements
+
+```cpp
+vector<int> arr(n);
+```
+
+Creates vector of size `n`.
+
+---
+
+# 🔹 Copy Array
+
+```cpp
+vector<int> arr_copy = arr;
+```
+
+Why?
+
+Because:
+
+* One array for sequential sort
+* One array for parallel sort
+
+Both algorithms should sort identical data for fair comparison.
+
+---
+
+# 🔹 Thread Information
+
+## Maximum Threads
+
+```cpp
+cout << omp_get_max_threads()
+```
+
+Returns maximum available threads.
+
+Example:
+
+```text
+Max threads available: 8
+```
+
+---
+
+## Threads Being Used
+
+```cpp
+#pragma omp parallel
+{
+    #pragma omp single
+    cout << omp_get_num_threads() << endl;
+}
+```
+
+### Meaning
+
+* `parallel` creates thread team
+* `single` ensures only one thread prints
+
+Example:
+
+```text
+Threads being used: 8
+```
+
+---
+
+# 🔹 Time Measurement
+
+OpenMP provides:
+
+```cpp
+omp_get_wtime()
+```
+
+Returns wall-clock time.
+
+---
+
+## Sequential Timing
+
+```cpp
+start = omp_get_wtime();
+sequential_bubble_sort(arr_copy);
+end = omp_get_wtime();
+```
+
+Time difference:
+
+```cpp
+end - start
+```
+
+---
+
+## Parallel Timing
+
+```cpp
+start = omp_get_wtime();
+parallel_bubble_sort(arr);
+end = omp_get_wtime();
+```
+
+---
+
+# 🔹 Output
+
+```cpp
+cout << "\nSorted Array: ";
+```
+
+Prints sorted array.
+
+---
+
+# 🔹 Example Execution
+
+Input:
+
+```text
+Enter number of elements: 5
+Enter elements:
+5 2 4 1 3
+```
+
+Output:
+
+```text
+Max threads available: 8
+Threads being used: 8
+
+Sequential Bubble Sort Time: 0.000021 seconds
+Parallel Bubble Sort Time: 0.000010 seconds
+
+Sorted Array: 1 2 3 4 5
+```
+
+---
+
+# 🔹 Important OpenMP Directive
+
+## `#pragma omp parallel for`
+
+This is the core of parallelization.
+
+It tells compiler:
+
+> "Split loop iterations among multiple threads."
+
+Without it:
+
+* Program runs sequentially.
+
+With it:
+
+* Multiple cores execute simultaneously.
+
+---
+
+# 🔹 Time Complexity
+
+## Sequential Bubble Sort
+
+Worst Case:
+
+[
+O(n^2)
+]
+
+---
+
+## Parallel Bubble Sort
+
+Still approximately:
+
+[
+O(n^2)
+]
+
+But execution becomes faster because work is distributed across threads.
+
+---
+
+# 🔹 Advantages of Parallel Bubble Sort
+
+✅ Uses multiple CPU cores
+✅ Faster for large datasets
+✅ Demonstrates parallel programming concepts
+✅ Simple OpenMP implementation
+
+---
+
+# 🔹 Limitations
+
+❌ Bubble sort is inherently inefficient
+❌ Parallel overhead can reduce benefit for small arrays
+❌ Merge Sort or Quick Sort are better for real-world usage
+
+---
+
+# 🔹 Why Merge Sort is Better for Parallelism
+
+Merge sort divides data recursively.
+
+Different halves can be sorted independently.
+
+So parallel merge sort scales much better than parallel bubble sort.
+
+Time complexity:
+
+O(n\log n)
+
+while bubble sort is:
+
+O(n^2)
+
+---
+
+# 🔹 Summary
+
+Your program:
+
+1. Takes array input
+2. Performs:
+
+   * Sequential Bubble Sort
+   * Parallel Bubble Sort using OpenMP
+3. Measures execution time
+4. Prints sorted output
+5. Demonstrates parallel computing using multiple threads
+
+The key concept is:
+
+```cpp
+#pragma omp parallel for
+```
+
+which enables parallel execution of loop iterations.

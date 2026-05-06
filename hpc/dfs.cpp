@@ -3,85 +3,108 @@
 
 // sudo apt update
 // sudo apt install g++
-
+// Parallel DFS using OpenMP
+// Compile:
 // g++ -fopenmp dfs.cpp -o dfs
+// Run:
 // ./dfs
-//dfs
+
 #include <iostream>
 #include <vector>
 #include <omp.h>
+
 using namespace std;
 
 const int MAXN = 100000;
+
+// Graph
 vector<int> adj[MAXN];
-bool visited[MAXN];
 
+// Visited array
+int visited[MAXN];
+
+// DFS Function
 void dfs(int node) {
-    // Atomically check and mark visited
-    bool alreadyVisited;
 
+    int alreadyVisited;
+
+    // Atomic check and update
     #pragma omp atomic capture
     {
         alreadyVisited = visited[node];
-        visited[node] = true;
+        visited[node] = 1;
     }
 
-    if (alreadyVisited) return;
+    // If already visited
+    if (alreadyVisited)
+        return;
 
-    // Critical only for printing (avoid mixed output)
+    // Critical section for printing
     #pragma omp critical
-    cout << node << " ";
+    {
+        cout << node << " ";
+    }
 
+    // Traverse neighbours
     for (int i = 0; i < adj[node].size(); i++) {
+
         int next = adj[node][i];
 
-        // Create task only if not visited (reduce overhead)
-        if (!visited[next]) {
-            #pragma omp task
-            dfs(next);
-        }
+        // Create parallel task
+        #pragma omp task
+        dfs(next);
     }
 
-    // Wait for all child tasks
+    // Wait for child tasks
     #pragma omp taskwait
 }
 
 int main() {
+
     int n, m;
+
     cout << "Enter nodes and edges: ";
     cin >> n >> m;
 
+    cout << "Enter edges:\n";
+
+    // Input graph
     for (int i = 0; i < m; i++) {
+
         int u, v;
         cin >> u >> v;
+
         adj[u].push_back(v);
-        adj[v].push_back(u);
+        adj[v].push_back(u); // Undirected graph
     }
 
     int start;
+
     cout << "Enter start node: ";
     cin >> start;
 
     // Initialize visited array
     for (int i = 0; i <= n; i++)
-        visited[i] = false;
+        visited[i] = 0;
+
+    // Thread Information
+    cout << "\nMaximum Threads Available: "
+         << omp_get_max_threads() << endl;
 
     #pragma omp parallel
     {
         #pragma omp single
         {
+            cout << "Threads Being Used: "
+                 << omp_get_num_threads() << endl;
+
+            cout << "\nDFS Traversal: ";
+
             dfs(start);
         }
     }
 
     cout << endl;
+
     return 0;
 }
-// pranjal@DESKTOP-9S159J6:/mnt/d/deep learnin/hpc$ ./dfs
-// Enter nodes and edges: 5 4
-// 1 2
-// 1 3
-// 2 4
-// 3 5
-// Enter start node: 1
-// 1 2 3 4 5

@@ -5,78 +5,106 @@
 // g++ -fopenmp merge2.cpp -o merge2
 // ./merge2
 
-//minmax
 #include <iostream>
 #include <vector>
 #include <omp.h>
 #include <climits>
+
 using namespace std;
 
-// Minimum
+// Minimum Reduction
 void min_reduction(vector<int>& arr) {
+
     int min_value = INT_MAX;
 
-    #pragma omp parallel for reduction(min: min_value)
+    #pragma omp parallel for reduction(min:min_value)
     for (int i = 0; i < arr.size(); i++) {
-        if (arr[i] < min_value) {
+
+        if (arr[i] < min_value)
             min_value = arr[i];
-        }
     }
 
-    cout << "Minimum value: " << min_value << endl;
+    cout << "Minimum Value: "
+         << min_value << endl;
 }
 
-// Maximum
+// Maximum Reduction
 void max_reduction(vector<int>& arr) {
+
     int max_value = INT_MIN;
 
-    #pragma omp parallel for reduction(max: max_value)
+    #pragma omp parallel for reduction(max:max_value)
     for (int i = 0; i < arr.size(); i++) {
-        if (arr[i] > max_value) {
+
+        if (arr[i] > max_value)
             max_value = arr[i];
-        }
     }
 
-    cout << "Maximum value: " << max_value << endl;
+    cout << "Maximum Value: "
+         << max_value << endl;
 }
 
-// Sum
+// Sum Reduction
 void sum_reduction(vector<int>& arr) {
+
     int sum = 0;
 
-    #pragma omp parallel for reduction(+: sum)
+    #pragma omp parallel for reduction(+:sum)
     for (int i = 0; i < arr.size(); i++) {
+
         sum += arr[i];
     }
 
-    cout << "Sum: " << sum << endl;
+    cout << "Sum: "
+         << sum << endl;
 }
 
-// Average
+// Average Reduction
 void average_reduction(vector<int>& arr) {
+
     int sum = 0;
 
-    #pragma omp parallel for reduction(+: sum)
+    #pragma omp parallel for reduction(+:sum)
     for (int i = 0; i < arr.size(); i++) {
+
         sum += arr[i];
     }
 
-    cout << "Average: " << (double)sum / arr.size() << endl;
+    double average = (double)sum / arr.size();
+
+    cout << "Average: "
+         << average << endl;
 }
 
 int main() {
+
     int n;
+
     cout << "Enter number of elements: ";
     cin >> n;
 
     vector<int> arr(n);
 
     cout << "Enter elements:\n";
-    for (int i = 0; i < n; i++) {
+
+    for (int i = 0; i < n; i++)
         cin >> arr[i];
+
+    // Thread Information
+    cout << "\nMaximum Threads Available: "
+         << omp_get_max_threads() << endl;
+
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            cout << "Threads Being Used: "
+                 << omp_get_num_threads() << endl;
+        }
     }
 
-    // Call functions
+    cout << "\n--- Reduction Operations ---\n";
+
     min_reduction(arr);
     max_reduction(arr);
     sum_reduction(arr);
@@ -84,11 +112,3 @@ int main() {
 
     return 0;
 }
-
-// Enter number of elements: 5
-// Enter elements:
-// 10 20 5 30 15
-// Minimum value: 5
-// Maximum value: 30
-// Sum: 80
-// Average: 16
